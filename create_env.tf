@@ -28,7 +28,7 @@ variable "vpc_cidr_block" {
 }
 
 variable "node_count" {
-  type        = string
+  type        = number
   description = "number of nodes excluding the controller, for e.g node_count=3 then 1 controller and 3 nodes, 4 vms in total."
   default     = 2
 }
@@ -56,9 +56,6 @@ variable "key_pair" {
 
 data "aws_availability_zones" "available" {}
 data "aws_caller_identity" "current" {}
-data "aws_arn" "current_arn" {
-  arn = data.aws_caller_identity.current.arn
-}
 data "aws_iam_role" "caller" {
   name = split("/", data.aws_caller_identity.current.arn)[1]
 }
