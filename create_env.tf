@@ -12,14 +12,14 @@ resource "aws_s3_bucket" "config_bucket" {
 resource "aws_iam_role" "node_role" {
   name                 = "k8s-playground-${var.env_id}"
   permissions_boundary = data.aws_iam_role.caller.permissions_boundary
-  assume_role_policy   = templatefile("${path.module}/assume-role-policy.tmpl", {})
+  assume_role_policy   = templatefile("${path.module}/tmpl/assume-role-policy.tmpl", {})
 }
 
 resource "aws_iam_policy" "node_policy" {
   name        = "k8s-playground-policy-${var.env_id}"
   description = "k8s playground policy for ${var.env_id}"
 
-  policy = templatefile("${path.module}/iam-policy.tmpl", { bucket_arn = aws_s3_bucket.config_bucket.arn })
+  policy = templatefile("${path.module}/tmpl/iam-policy.tmpl", { bucket_arn = aws_s3_bucket.config_bucket.arn })
 }
 
 resource "aws_iam_role_policy_attachment" "attach" {
@@ -135,7 +135,7 @@ resource "aws_instance" "k8s_controller" {
     volume_size = 100
   }
   key_name = var.key_pair
-  user_data = templatefile("${path.module}/controller-init.tmpl", {
+  user_data = templatefile("${path.module}/tmpl/controller-init.tmpl", {
     env_id                = var.env_id,
     controller_private_ip = aws_network_interface.controller_iface.private_ip
     s3_bucket             = aws_s3_bucket.config_bucket.id
@@ -167,7 +167,7 @@ resource "aws_instance" "k8s_nodes" {
     volume_size = 100
   }
   key_name = var.key_pair
-  user_data = templatefile("${path.module}/node-init.tmpl", {
+  user_data = templatefile("${path.module}/tmpl/node-init.tmpl", {
     env_id    = var.env_id,
     index     = count.index
     s3_bucket = aws_s3_bucket.config_bucket.id
