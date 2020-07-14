@@ -1,0 +1,52 @@
+#!/bin/bash
+
+sudo mkdir -p /opt/k8s-playground
+chown ubuntu:ubuntu -R /opt/k8s-playground
+exec > >(tee "/opt/k8s-playground/startup.log") 2>&1
+
+swapoff -a
+sudo apt-get install -y \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg-agent \
+    software-properties-common
+
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+
+sudo add-apt-repository -y \
+   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+   $(lsb_release -cs) \
+   stable"
+
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add
+sudo apt-add-repository -y "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io kubeadm kubelet kubectl awscli
+sudo apt-mark hold docker-ce docker-ce-cli containerd.io kubeadm kubelet kubectl
+sudo systemctl enable kubelet.service
+sudo systemctl enable docker.service
+sudo hostnamectl set-hostname "k8s-playground-${env_id}-controller"
+echo 127.0.0.1 "k8s-playground-${env_id}-controller" >> /etc/hosts
+
+sudo kubeadm init --pod-network-cidr=192.168.0.0/16
+
+mkdir -p /home/ubuntu/.kube
+sudo cp -i /etc/kubernetes/admin.conf /home/ubuntu/.kube/config
+sudo chown ubuntu:ubuntu /home/ubuntu/.kube/config
+
+pushd /opt/k8s-playground
+wget https://docs.projectcalico.org/manifests/calico.yaml
+sudo -u ubuntu kubectl apply -f calico.yaml
+popd
+
+TOKEN=$(kubeadm token list | awk 'FNR > 1 { print $1 }')
+CERT=$(openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //')
+
+echo "#!/bin/bash" > /home/ubuntu/kubeadm_join.sh
+echo "sudo kubeadm join ${controller_private_ip}:6443 --token $TOKEN --discovery-token-ca-cert-hash sha256:$CERT" >> /home/ubuntu/kubeadm_join.sh
+sudo chown ubuntu:ubuntu /home/ubuntu/kubeadm_join.sh
+aws s3 cp /home/ubuntu/kubeadm_join.sh s3://${s3_bucket}/${env_id}/kubeadm_join.sh
+
+sudo reboot
+
