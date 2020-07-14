@@ -237,7 +237,7 @@ sudo mkdir -p /opt/k8s-playground
 chown ubuntu:ubuntu -R /opt/k8s-playground
 exec > >(tee "/opt/k8s-playground/startup.log") 2>&1
 
-swapof -a
+swapoff -a
 sudo apt-get install -y \
     apt-transport-https \
     ca-certificates \
@@ -316,7 +316,7 @@ sudo mkdir -p /opt/k8s-playground
 chown ubuntu:ubuntu -R /opt/k8s-playground
 exec > >(tee "/opt/k8s-playground/startup.log") 2>&1
 
-swapof -a
+swapoff -a
 sudo apt-get install -y \
     apt-transport-https \
     ca-certificates \
