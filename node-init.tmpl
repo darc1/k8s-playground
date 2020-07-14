@@ -1,0 +1,42 @@
+#!/bin/bash
+sudo mkdir -p /opt/k8s-playground
+chown ubuntu:ubuntu -R /opt/k8s-playground
+exec > >(tee "/opt/k8s-playground/startup.log") 2>&1
+
+swapoff -a
+sudo apt-get install -y \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg-agent \
+    software-properties-common
+
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+
+sudo add-apt-repository -y \
+   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+   $(lsb_release -cs) \
+   stable"
+
+sudo apt-get update
+sudo apt-get install docker-ce docker-ce-cli containerd.io
+
+
+
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add
+sudo apt-add-repository -y "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io kubeadm kubelet kubectl awscli
+sudo apt-mark hold docker-ce docker-ce-cli containerd.io kubeadm kubelet kubectl
+sudo systemctl enable kubelet.service
+sudo systemctl enable docker.service
+sudo hostnamectl set-hostname "k8s-playground-${env_id}-node-${index}"
+echo 127.0.0.1 "k8s-playground-${env_id}-node-${index}" >> /etc/hosts
+sudo -u ubuntu aws s3 cp s3://${s3_bucket}/${env_id}/kubeadm_join.sh /opt/k8s-playground/
+
+sudo chmod +x /opt/k8s-playground/kubeadm_join.sh
+sudo chown ubuntu:ubuntu /opt/k8s-playground/kubeadm_join.sh
+sudo -u ubuntu /opt/k8s-playground/kubeadm_join.sh
+
+sudo reboot
+
