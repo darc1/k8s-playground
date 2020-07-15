@@ -79,10 +79,34 @@ resource "aws_security_group" "k8s_playground_sg" {
   }
 
   ingress {
+    description = "kublet api"
+    from_port   = 10250
+    to_port     = 10250
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr_block]
+  }
+
+  ingress {
     description = "k8s node ports"
     from_port   = 30000
     to_port     = 32767
     protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr_block]
+  }
+
+  ingress {
+    description = "bgp for calico"
+    from_port   = 179
+    to_port     = 179
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr_block]
+  }
+
+  ingress {
+    description = "ipip for calico"
+    from_port   = -1
+    to_port     = -1
+    protocol    = "4"
     cidr_blocks = [var.vpc_cidr_block]
   }
 

@@ -29,7 +29,7 @@ sudo systemctl enable docker.service
 sudo hostnamectl set-hostname "k8s-playground-${env_id}-controller"
 echo 127.0.0.1 "k8s-playground-${env_id}-controller" >> /etc/hosts
 
-sudo kubeadm init --pod-network-cidr=192.168.0.0/16
+sudo kubeadm init --pod-network-cidr=192.168.0.0/16 --apiserver-cert-extra-sans $(curl ipinfo.io/ip)
 
 mkdir -p /home/ubuntu/.kube
 sudo cp -i /etc/kubernetes/admin.conf /home/ubuntu/.kube/config
