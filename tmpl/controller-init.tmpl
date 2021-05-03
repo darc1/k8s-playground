@@ -27,7 +27,7 @@ sudo apt-mark hold docker-ce docker-ce-cli containerd.io kubeadm kubelet kubectl
 sudo systemctl enable kubelet.service
 sudo systemctl enable docker.service
 sudo hostnamectl set-hostname "k8s-playground-${env_id}-controller"
-echo 127.0.0.1 "k8s-playground-${env_id}-controller" >> /etc/hosts
+echo 127.0.0.1 "k8s-playground-${env_id}-controller" | sudo tee -a /etc/hosts > /dev/null
 
 sudo kubeadm init --pod-network-cidr=192.168.0.0/16 --apiserver-cert-extra-sans $(curl ipinfo.io/ip)
 
